@@ -1,0 +1,29 @@
+
+inline bool HideThread(HANDLE hThread)
+{
+    typedef NTSTATUS(NTAPI* pNtSetInformationThread)
+        (HANDLE, UINT, PVOID, ULONG);
+    NTSTATUS Status;
+
+    // Get NtSetInformationThread
+    pNtSetInformationThread NtSIT = (pNtSetInformationThread)
+        GetProcAddress(GetModuleHandle(TEXT("ntdll.dll")),
+            "NtSetInformationThread");
+
+    // Shouldn't fail
+    if (NtSIT == NULL)
+        return false;
+
+    // Set the thread info
+    if (hThread == NULL)
+        Status = NtSIT(GetCurrentThread(),
+            0x11, // HideThreadFromDebugger
+            0, 0);
+    else
+        Status = NtSIT(hThread, 0x11, 0, 0);
+
+    if (Status != 0x00000000)
+        return false;
+    else
+        return true;
+}
